@@ -12,7 +12,7 @@ backend for the following receipt printers:
 
 The XML document has the following sort of style:
 
-```
+```xml
 <?xml version="1.0" ?>
 <ticket>
   <head>
