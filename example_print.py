@@ -21,9 +21,8 @@ parser.add_argument('filenames', metavar='F', type=str, help='templates to print
 parser.add_argument('--backend', dest='backend', type=str, help='Printer backend', required=True, choices=BACKENDS.keys())
 output_group = parser.add_mutually_exclusive_group(required=True)
 output_group.add_argument('--debug', action='store_true')
-serial_group = output_group.add_argument_group('serial options')
-serial_group.add_argument('--serial', dest='serial_port', type=str, help='Serial port location')
-serial_group.add_argument('--baudrate', dest='baudrate', type=int, help='Serial port baudrate', default=19200)
+output_group.add_argument('--serial', dest='serial_port', type=str, help='Serial port location')
+parser.add_argument('--baudrate', dest='baudrate', type=int, help='Serial port baudrate', default=19200)
 
 args = parser.parse_args()
 
