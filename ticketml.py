@@ -47,6 +47,8 @@ class BaseBackend(object):
         BARCODE_HRI_POSITION.BOTH: 3,
     }
 
+    BASE_CHARS_PER_LINE = 48
+
     def _start_print_barcode(self, barcode_type, hri_posn, barcode_height):
         if barcode_type not in self.BARCODE_MAP:
             raise Exception('unacceptable barcode type: {}'.format(barcode_type))
@@ -79,6 +81,9 @@ class BaseBackend(object):
         hex = '{}{}'.format(width-1, height-1)
 
         self._serial.write(('1d21' + hex).decode('hex'))
+
+    def get_characters_per_line(self, font_width):
+        return self.BASE_CHARS_PER_LINE / font_width
 
 class Ibm4610Backend(object):
     BARCODE_MAP = {
@@ -205,6 +210,7 @@ class CbmBackend(BaseBackend):
 class TicketML(object):
     NO_PRINT_CONTENT = {
         'barcode': True,
+        'sensibreak': True,
     }
 
     def __init__(self, tree):
@@ -290,7 +296,43 @@ class TicketML(object):
             new_state = self.pop_state()
 
         self.backend.set_font_size(new_state['font_width'], new_state['font_height'])
-        
+
+    def handle_sensibreak(self, action, elem):
+        if action != 'end':
+            return
+ 
+        chars_per_line = self.backend.get_characters_per_line(self.stack[0]['font_width'])
+        txt = elem.text.replace('\r', '').replace('\n', '')
+        if len(txt) <= chars_per_line:
+            self.print_text(txt)
+            return
+
+        # try to break this text intelligently:
+        made_changes = True
+        txt = [txt]
+        while made_changes:
+            made_changes = False
+            new_txt = []
+            for block in txt:
+                if len(block) <= chars_per_line:
+                    new_txt.append(block)
+                    continue
+
+                # find a space
+                spacepos = block[:chars_per_line].rfind(' ')
+                if spacepos == -1:
+                    before = block[:chars_per_line]
+                    after = block[chars_per_line+1:]
+                else:
+                    before = block[:spacepos]
+                    after = block[spacepos+1:]
+                new_txt.append(before)
+                new_txt.append(after)
+                print "altered", block, "to", before, "[and]", after
+                made_changes = True
+            txt = new_txt
+
+        self.backend.print_text('\n'.join(txt))
 
     def handle_align(self, action, elem):
         new_posn = elem.get('mode')
