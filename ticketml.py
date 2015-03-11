@@ -61,6 +61,7 @@ class BaseBackend(object):
         self._serial.write('1d48'.decode('hex') + chr(hri_posn_byte))
         self._serial.write('1d68'.decode('hex') + chr(barcode_height))
 
+        return barcode_type_byte
 
     def _set_alignment(self, new_mode):
         self._serial.write('1b61'.decode('hex') + chr(new_mode))
@@ -118,7 +119,7 @@ class Ibm4610Backend(object):
         self._serial.write('1d2f00'.decode('hex') + chr(logo_num))
 
     def print_barcode(self, barcode_type, barcode_data, hri_posn, barcode_height):
-        self._start_print_barcode(barcode_type, hri_posn, barcode_height)
+        barcode_type_byte = self._start_print_barcode(barcode_type, hri_posn, barcode_height)
         self._serial.write('\n')
         self._serial.write('1d6b'.decode('hex') + chr(barcode_type_byte) + barcode_data + chr(0))
 
@@ -194,7 +195,7 @@ class CbmBackend(BaseBackend):
         self._serial.write('1c70'.decode('hex') + chr(logo_num) + '00'.decode('hex'))
 
     def print_barcode(self, barcode_type, barcode_data, hri_posn, barcode_height):
-        self._start_print_barcode(barcode_type, hri_posn, barcode_height)
+        barcode_type_byte = self._start_print_barcode(barcode_type, hri_posn, barcode_height)
         self._serial.write('\n')
         self._serial.write('1d6b'.decode('hex') + chr(barcode_type_byte) + chr(len(barcode_data)) + barcode_data)
 
