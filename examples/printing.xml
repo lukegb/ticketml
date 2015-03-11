@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+<ticket>
+  <align mode="center">
+<font width="1">123456789012345678901234567890123456789012345678</font><br />
+<font width="1">123456789012345678901234567890123456789012345678x</font><br />
+<font width="2">123456789012345678901234</font><br />
+<font width="2">123456789012345678901234x</font><br />
+<font width="3">1234567890123456</font><br />
+<font width="3">1234567890123456x</font><br />
+<font width="4">123456789012</font><br />
+<font width="4">123456789012x</font><br />
+<font width="5">123456789</font><br />
+<font width="5">123456789x</font><br />
+<font width="6">12345678</font><br />
+<font width="6">12345678x</font><br />
+<font width="7">123456</font><br />
+<font width="7">123456x</font><br />
+<font width="8">123456</font><br />
+<font width="8">123456x</font><br />
+  </align>
+</ticket>
