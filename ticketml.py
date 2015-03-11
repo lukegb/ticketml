@@ -307,7 +307,8 @@ class TicketML(object):
         self._set_state(action, elem, 'alignment', posns[new_posn])
 
     def handle_br(self, action, elem):
-        self.backend.print_text('\n')
+        if action == 'end':
+            self.backend.print_text('\n')
 
     def handle_ticket(self, action, elem):
         if action == 'end':
