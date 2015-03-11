@@ -7,17 +7,31 @@ BACKENDS = {
     'cbm': ticketml.CbmBackend,
 }
 
+class MockSerial(object):
+    def write(self, data):
+        print ">>> {}".format(data.encode('hex'))
+
+    def flush(self):
+        print "> FLUSH"
+
+
 parser = argparse.ArgumentParser(description='Print a template.')
 
 parser.add_argument('filenames', metavar='F', type=str, help='templates to print', nargs='+')
 parser.add_argument('--backend', dest='backend', type=str, help='Printer backend', required=True, choices=BACKENDS.keys())
-parser.add_argument('--serial', dest='serial_port', type=str, help='Serial port location', required=True)
-parser.add_argument('--baudrate', dest='baudrate', type=int, help='Serial port baudrate', required=True)
+output_group = parser.add_mutually_exclusive_group(required=True)
+output_group.add_argument('--debug', action='store_true')
+serial_group = output_group.add_argument_group('serial options')
+serial_group.add_argument('--serial', dest='serial_port', type=str, help='Serial port location')
+serial_group.add_argument('--baudrate', dest='baudrate', type=int, help='Serial port baudrate', default=19200)
 
 args = parser.parse_args()
 
-serial_port = serial.Serial(args.serial_port, args.baudrate)
-backend = BACKENDS.get(args.backend)(serial_port)
+if args.serial_port:
+    output = serial.Serial(args.serial_port, args.baudrate)
+elif args.debug:
+    output = MockSerial()
+backend = BACKENDS.get(args.backend)(output)
 
 for filename in args.filenames:
     with open(filename, 'r') as f:
