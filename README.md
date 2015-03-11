@@ -1,6 +1,9 @@
 # ticketml
 A small XML-based markup language for tickets
 
+Why?
+====
+
 As part of the code I write for [Imperial Cinema](http://www.imperialcinema.co.uk), I decided
 I need some way of cleanly abstracting over multiple different (but similar) ticket printers.
 
@@ -9,6 +12,9 @@ backend for the following receipt printers:
 
 * Citizen CBM-1000
 * IBM 4610 family (tested on the 4610-TF6)
+
+The XML
+=======
 
 The XML document has the following sort of style:
 
@@ -41,3 +47,29 @@ The following tags are implemented - unknown tags are ignored (but are still rec
 * `align mode="left|right|center"`: changes the alignment of text
 * `br`: prints a newline
 * `font (width="WIDTH") (height="HEIGHT")`: changes the font width/height multiplier
+
+Using it
+========
+
+At the moment there's a fairly simplistic API. In order to get started, you'll need some sort of file-like output device. This is usually a PySerial `Serial` object.
+
+```python
+import serial
+output = serial.Serial('/dev/ttyS1', 19200)
+```
+
+Now that you have an output device, you can construct a `Backend`. At present there's a choice of two, the `CbmBackend` (for Citizen CBM-1000 printers) and the `Ibm4610Backend` (for IBM 4610 series printers). Backends are up to take whatever arguments they choose - at the moment this is just the output device they should talk to.
+
+```python
+backend = ticketml.Ibm4610Backend(output)
+```
+
+Now you can finally construct a parser. This takes place in two stages - first you parse the input XML, then you tell the parser to render it to the output device:
+
+```python
+ticket = ticketml.TicketML.parse('<?xml version="1.0" ?>\n<ticket>Hello! This is my first ticket!</ticket>')
+context = {}
+ticket.go(context, backend)
+```
+
+The `context` parameter is unused at the moment, but is planned to be used for future templating functionality.
