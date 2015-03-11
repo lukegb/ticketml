@@ -350,37 +350,3 @@ class TicketML(object):
         barcode_data = elem.text.strip()
 
 	self.backend.print_barcode(barcode_type, barcode_data, hri_position, barcode_height)
-
-EXAMPLE_XML = u"""
-<?xml version="1.0" ?>
-<ticket>
-  <head>
-<!--    <logo num="1" />
-    not bold<b> suddenly bold</b> not bold again<br />
-    not underlined <u>suddenly underlined</u> not underlined<br />
-    now <b>for <u>a mix</u></b> <u>of <b>settings</b></u><br/>
-    <align mode="center"><logo num="2" /></align>-->
-    base font<br />
-    <font width="2">2x wide</font><br />
-    <font height="2">2x high</font><br />
-    <font width="2" height="2">2x big</font><br />
-    <font width="8" height="8">MASSIVE</font>
-  </head>
-</ticket>
-""".strip()
-EXAMPLE_XML = u''.join([x.lstrip() for x in EXAMPLE_XML.split('\n')])
-
-if __name__ == '__main__':
-    class MockSerial(object):
-        def write(self, data):
-            print ">>> {}".format(data.encode('hex'))
-
-        def flush(self):
-            print "> FLUSH"
-
-    MOCK_MODE = False
-
-    import serial
-    my_output = serial.Serial('/dev/ttyS1', 19200) if not MOCK_MODE else MockSerial()
-
-    TicketML.parse(EXAMPLE_XML).go({}, CbmBackend(my_output))
