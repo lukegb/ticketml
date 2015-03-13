@@ -35,7 +35,7 @@ clean-test:
 	rm -fr htmlcov/
 
 lint:
-	flake8 {{ cookiecutter.repo_name }} tests
+	flake8 ticketml tests
 
 test:
 	python setup.py test
@@ -44,22 +44,22 @@ test-all:
 	tox
 
 coverage:
-	coverage run --source {{ cookiecutter.repo_name }} setup.py test
+	coverage run --source ticketml setup.py test
 	coverage report -m
 	coverage html
 	open htmlcov/index.html
 
 docs:
-	rm -f docs/{{ cookiecutter.repo_name }}.rst
+	rm -f docs/ticketml.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ {{ cookiecutter.repo_name }}
+	sphinx-apidoc -o docs/ ticketml
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	open docs/_build/html/index.html
 
 release: clean
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
+	python setup.py sdist upload --sign
+	python setup.py bdist_wheel upload --sign
 
 dist: clean
 	python setup.py sdist
