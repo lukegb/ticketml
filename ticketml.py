@@ -124,7 +124,7 @@ class BaseBackend(object):
     def get_characters_per_line(self, font_width):
         return self.BASE_CHARS_PER_LINE / font_width
 
-class Ibm4610Backend(object):
+class Ibm4610Backend(BaseBackend):
     BARCODE_MAP = {
         BarcodeType.upc_a: 0,
         BarcodeType.upc_e: 1,
