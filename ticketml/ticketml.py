@@ -122,7 +122,7 @@ class BaseBackend(object):
         self._serial.write(h2b('1d21' + hex))
 
     def get_characters_per_line(self, font_width):
-        return self.BASE_CHARS_PER_LINE / font_width
+        return self.BASE_CHARS_PER_LINE // font_width
 
 class Ibm4610Backend(BaseBackend):
     BARCODE_MAP = {

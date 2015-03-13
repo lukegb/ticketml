@@ -16,6 +16,7 @@ with open('HISTORY.md') as history_file:
 
 requirements = [
     'lxml>=3.4',
+    'pySerial>=2.7',
 ]
 
 test_requirements = [
@@ -62,5 +63,10 @@ setup(
         'Programming Language :: Python :: 3.4',
     ],
     test_suite='tests',
-    tests_require=test_requirements
+    tests_require=test_requirements,
+    entry_points={
+        'console_scripts': [
+            'ticketml_print = ticketml.example_print:main',
+        ],
+    },
 )

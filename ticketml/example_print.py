@@ -8,6 +8,7 @@
 import argparse
 import ticketml
 import serial
+import binascii
 
 BACKENDS = {
     'ibm4610': ticketml.Ibm4610Backend,
@@ -16,10 +17,12 @@ BACKENDS = {
 
 class MockSerial(object):
     def write(self, data):
-        print ">>> {}".format(data.encode('hex'))
+        if isinstance(data, str):
+            data = data.encode('utf-8')
+        print(">>> {}".format(binascii.hexlify(data)))
 
     def flush(self):
-        print "> FLUSH"
+        print("> FLUSH")
 
 
 parser = argparse.ArgumentParser(description='Print a template.')
@@ -31,17 +34,19 @@ output_group.add_argument('--debug', action='store_true')
 output_group.add_argument('--serial', dest='serial_port', type=str, help='Serial port location')
 parser.add_argument('--baudrate', dest='baudrate', type=int, help='Serial port baudrate', default=19200)
 
-args = parser.parse_args()
 
-if args.serial_port:
-    output = serial.Serial(args.serial_port, args.baudrate)
-elif args.debug:
-    output = MockSerial()
-backend = BACKENDS.get(args.backend)(output)
-
-for filename in args.filenames:
-    with open(filename, 'r') as f:
-        ticket_xml = f.read()
-    ticket_xml = ''.join([x.lstrip() for x in ticket_xml.split('\n')])
-    ticket = ticketml.TicketML.parse(ticket_xml)
-    ticket.go({}, backend)
+def main():
+    args = parser.parse_args()
+    
+    if args.serial_port:
+        output = serial.Serial(args.serial_port, args.baudrate)
+    elif args.debug:
+        output = MockSerial()
+    backend = BACKENDS.get(args.backend)(output)
+    
+    for filename in args.filenames:
+        with open(filename, 'r') as f:
+            ticket_xml = f.read()
+        ticket_xml = ''.join([x.lstrip() for x in ticket_xml.split('\n')])
+        ticket = ticketml.TicketML.parse(ticket_xml)
+        ticket.go({}, backend)
