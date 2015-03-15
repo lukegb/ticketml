@@ -99,13 +99,13 @@ class BaseBackend(object):
 
         assert 1 <= barcode_height <= 255, "barcode height must be between 1 and 255"
 
-        self._serial.write(h2b('1d48') + bchr(hri_posn_byte))
-        self._serial.write(h2b('1d68') + bchr(barcode_height))
+        self._write_immediately(h2b('1d48') + bchr(hri_posn_byte))
+        self._write_immediately(h2b('1d68') + bchr(barcode_height))
 
         return barcode_type_byte
 
     def _set_alignment(self, new_mode):
-        self._serial.write(h2b('1b61') + bchr(new_mode))
+        self._write_at_linebreak(h2b('1b61') + bchr(new_mode))
 
     def set_alignment(self, alignment):
         if alignment not in self.ALIGNMENT_LOOKUP:
@@ -119,10 +119,29 @@ class BaseBackend(object):
 
         hex = '{}{}'.format(width-1, height-1)
 
-        self._serial.write(h2b('1d21' + hex))
+        self._write_immediately(h2b('1d21' + hex))
 
     def get_characters_per_line(self, font_width):
         return self.BASE_CHARS_PER_LINE // font_width
+
+    def linebreak(self):
+        self._write_immediately('\n')
+
+    def _write_immediately(self, data):
+        if self._on_next_linebreak and b'\n' in data:
+            pre, ln, post = data.partition(b'\n')
+            self._serial.write(pre + ln + self._on_next_linebreak + post)
+            self._on_next_linebreak = b''
+        else:
+            self._serial.write(data)
+        self._at_linebreak = data.endswith(b'\n')
+
+    def _write_at_linebreak(self, data):
+        if self._at_linebreak:
+            self._serial.write(data)
+        else:
+            self._on_next_linebreak += data
+
 
 class Ibm4610Backend(BaseBackend):
     BARCODE_MAP = {
@@ -137,38 +156,42 @@ class Ibm4610Backend(BaseBackend):
         BarcodeType.code_128: 7,
     }
 
+    BASE_CHARS_PER_LINE = 44
+
     def __init__(self, serial):
         self._serial = serial
+        self._on_next_linebreak = b''
+        self._at_linebreak = False
 
         self._set_alignment(self.ALIGNMENT_LEFT)
 
     def set_emphasis(self, on_off):
-        self._serial.write(h2b('1b47') + bchr(int(bool(on_off == Emphasis.on))))
+        self._write_immediately(h2b('1b47') + bchr(int(bool(on_off == Emphasis.on))))
 
     def set_double_height(self, on_off):
-        self._serial.write(h2b('1b68') + bchr(int(bool(on_off == DoubleHeight.on))))
+        self._write_immediately(h2b('1b68') + bchr(int(bool(on_off == DoubleHeight.on))))
 
     def set_double_width(self, on_off):
-        self._serial.write(h2b('1b57') + bchr(int(bool(on_off == DoubleWidth.on))))
+        self._write_immediately(h2b('1b57') + bchr(int(bool(on_off == DoubleWidth.on))))
 
     def set_underline(self, on_off):
-        self._serial.write(h2b('1b2d') + bchr(int(bool(on_off == Underline.on))))
+        self._write_immediately(h2b('1b2d') + bchr(int(bool(on_off == Underline.on))))
 
 
     def print_text(self, text):
-        self._serial.write(text.encode(self.CODEPAGE))
+        self._write_immediately(text.encode(self.CODEPAGE))
 
     def print_logo(self, logo_num):
-        self._serial.write('\n')
-        self._serial.write(h2b('1d2f00') + bchr(logo_num))
+        self._write_immediately(b'\n')
+        self._write_immediately(h2b('1d2f00') + bchr(logo_num))
 
     def print_barcode(self, barcode_type, barcode_data, hri_posn, barcode_height):
         barcode_type_byte = self._start_print_barcode(barcode_type, hri_posn, barcode_height)
-        self._serial.write('\n')
-        self._serial.write(h2b('1d6b') + bchr(barcode_type_byte) + barcode_data + bchr(0))
+        self._write_immediately('\n')
+        self._write_immediately(h2b('1d6b') + bchr(barcode_type_byte) + barcode_data + bchr(0))
 
     def feed_and_cut(self):
-        self._serial.write(h2b('0c'))
+        self._write_immediately(h2b('0c'))
 
 class CbmBackend(BaseBackend):
     EMPHASIS_BIT = 3
@@ -207,13 +230,15 @@ class CbmBackend(BaseBackend):
 
     def __init__(self, serial):
         self._serial = serial
+        self._on_next_linebreak = b''
+        self._at_linebreak = False
 
         self._set_printing_mode(0)
         self._set_alignment(self.ALIGNMENT_LEFT)
 
     def _set_printing_mode(self, new_mode):
         self._printing_mode = new_mode
-        self._serial.write(h2b('1b21') + bchr(new_mode))
+        self._write_immediately(h2b('1b21') + bchr(new_mode))
 
     def _set_printing_mode_bit(self, bit, new_state):
         self._set_printing_mode(set_or_clear_bit(self._printing_mode, bit, new_state))
@@ -232,19 +257,19 @@ class CbmBackend(BaseBackend):
 
 
     def print_text(self, text):
-        self._serial.write(text.encode(self.CODEPAGE))
+        self._write_immediately(text.encode(self.CODEPAGE))
 
     def print_logo(self, logo_num):
-        self._serial.write('\n')
-        self._serial.write(h2b('1c70') + bchr(logo_num) + h2b('00'))
+        self._write_immediately('\n')
+        self._write_immediately(h2b('1c70') + bchr(logo_num) + h2b('00'))
 
     def print_barcode(self, barcode_type, barcode_data, hri_posn, barcode_height):
         barcode_type_byte = self._start_print_barcode(barcode_type, hri_posn, barcode_height)
-        self._serial.write('\n')
-        self._serial.write(h2b('1d6b') + bchr(barcode_type_byte) + bchr(len(barcode_data)) + barcode_data)
+        self._write_immediately('\n')
+        self._write_immediately(h2b('1d6b') + bchr(barcode_type_byte) + bchr(len(barcode_data)) + barcode_data)
 
     def feed_and_cut(self):
-        self._serial.write('\n\n\n\n' + h2b('1d5601'))
+        self._write_immediately('\n\n\n\n' + h2b('1d5601'))
 
 class TicketML(object):
     NO_PRINT_CONTENT = {
@@ -388,7 +413,7 @@ class TicketML(object):
 
     def handle_br(self, action, elem):
         if action == 'end':
-            self.backend.print_text('\n')
+            self.backend.linebreak()
 
     def handle_ticket(self, action, elem):
         if action == 'end':
@@ -409,7 +434,7 @@ class TicketML(object):
         if action != 'end':
             return
 
-        hriposns = dict(above=BarcodeHriPosition.ABOVE, below=BarcodeHriPosition.BELOW, none=BarcodeHriPosition.NONE, both=BarcodeHriPosition.BOTH)
+        hriposns = dict(above=BarcodeHriPosition.above, below=BarcodeHriPosition.below, none=BarcodeHriPosition.none, both=BarcodeHriPosition.both)
         hri_position = hriposns[elem.get('hriposition', 'below')]
 
         barcode_types = {

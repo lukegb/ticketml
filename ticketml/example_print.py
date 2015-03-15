@@ -9,6 +9,7 @@ import argparse
 import ticketml
 import serial
 import binascii
+import sys
 
 BACKENDS = {
     'ibm4610': ticketml.Ibm4610Backend,
@@ -17,7 +18,7 @@ BACKENDS = {
 
 class MockSerial(object):
     def write(self, data):
-        if isinstance(data, str):
+        if sys.version_info.major >= 3 and isinstance(data, str):
             data = data.encode('utf-8')
         print(">>> {}".format(binascii.hexlify(data)))
 
