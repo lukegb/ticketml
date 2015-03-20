@@ -59,6 +59,7 @@ def set_or_clear_bit(data, bit, new_value):
     return data
 
 def h2b(hchars):
+    print(type(hchars), hchars)
     return binascii.unhexlify(hchars)
 
 if sys.version < '3':
@@ -99,13 +100,13 @@ class BaseBackend(object):
 
         assert 1 <= barcode_height <= 255, "barcode height must be between 1 and 255"
 
-        self._write_immediately(h2b('1d48') + bchr(hri_posn_byte))
-        self._write_immediately(h2b('1d68') + bchr(barcode_height))
+        self._write_immediately(h2b(b'1d48') + bchr(hri_posn_byte))
+        self._write_immediately(h2b(b'1d68') + bchr(barcode_height))
 
         return barcode_type_byte
 
     def _set_alignment(self, new_mode):
-        self._write_at_linebreak(h2b('1b61') + bchr(new_mode))
+        self._write_at_linebreak(h2b(b'1b61') + bchr(new_mode))
 
     def set_alignment(self, alignment):
         if alignment not in self.ALIGNMENT_LOOKUP:
@@ -119,13 +120,13 @@ class BaseBackend(object):
 
         hex = '{}{}'.format(width-1, height-1)
 
-        self._write_immediately(h2b('1d21' + hex))
+        self._write_immediately(h2b(b'1d21' + hex))
 
     def get_characters_per_line(self, font_width):
         return self.BASE_CHARS_PER_LINE // font_width
 
     def linebreak(self):
-        self._write_immediately('\n')
+        self._write_immediately(b'\n')
 
     def _write_immediately(self, data):
         if self._on_next_linebreak and b'\n' in data:
@@ -166,16 +167,16 @@ class Ibm4610Backend(BaseBackend):
         self._set_alignment(self.ALIGNMENT_LEFT)
 
     def set_emphasis(self, on_off):
-        self._write_immediately(h2b('1b47') + bchr(int(bool(on_off == Emphasis.on))))
+        self._write_immediately(h2b(b'1b47') + bchr(int(bool(on_off == Emphasis.on))))
 
     def set_double_height(self, on_off):
-        self._write_immediately(h2b('1b68') + bchr(int(bool(on_off == DoubleHeight.on))))
+        self._write_immediately(h2b(b'1b68') + bchr(int(bool(on_off == DoubleHeight.on))))
 
     def set_double_width(self, on_off):
-        self._write_immediately(h2b('1b57') + bchr(int(bool(on_off == DoubleWidth.on))))
+        self._write_immediately(h2b(b'1b57') + bchr(int(bool(on_off == DoubleWidth.on))))
 
     def set_underline(self, on_off):
-        self._write_immediately(h2b('1b2d') + bchr(int(bool(on_off == Underline.on))))
+        self._write_immediately(h2b(b'1b2d') + bchr(int(bool(on_off == Underline.on))))
 
 
     def print_text(self, text):
@@ -183,15 +184,15 @@ class Ibm4610Backend(BaseBackend):
 
     def print_logo(self, logo_num):
         self._write_immediately(b'\n')
-        self._write_immediately(h2b('1d2f00') + bchr(logo_num))
+        self._write_immediately(h2b(b'1d2f00') + bchr(logo_num))
 
     def print_barcode(self, barcode_type, barcode_data, hri_posn, barcode_height):
         barcode_type_byte = self._start_print_barcode(barcode_type, hri_posn, barcode_height)
-        self._write_immediately('\n')
-        self._write_immediately(h2b('1d6b') + bchr(barcode_type_byte) + barcode_data + bchr(0))
+        self._write_immediately(b'\n')
+        self._write_immediately(h2b(b'1d6b') + bchr(barcode_type_byte) + barcode_data + bchr(0))
 
     def feed_and_cut(self):
-        self._write_immediately(h2b('0c'))
+        self._write_immediately(h2b(b'0c'))
 
 class CbmBackend(BaseBackend):
     EMPHASIS_BIT = 3
@@ -238,7 +239,7 @@ class CbmBackend(BaseBackend):
 
     def _set_printing_mode(self, new_mode):
         self._printing_mode = new_mode
-        self._write_immediately(h2b('1b21') + bchr(new_mode))
+        self._write_immediately(h2b(b'1b21') + bchr(new_mode))
 
     def _set_printing_mode_bit(self, bit, new_state):
         self._set_printing_mode(set_or_clear_bit(self._printing_mode, bit, new_state))
@@ -260,16 +261,16 @@ class CbmBackend(BaseBackend):
         self._write_immediately(text.encode(self.CODEPAGE))
 
     def print_logo(self, logo_num):
-        self._write_immediately('\n')
-        self._write_immediately(h2b('1c70') + bchr(logo_num) + h2b('00'))
+        self._write_immediately(b'\n')
+        self._write_immediately(h2b(b'1c70') + bchr(logo_num) + h2b(b'00'))
 
     def print_barcode(self, barcode_type, barcode_data, hri_posn, barcode_height):
         barcode_type_byte = self._start_print_barcode(barcode_type, hri_posn, barcode_height)
-        self._write_immediately('\n')
-        self._write_immediately(h2b('1d6b') + bchr(barcode_type_byte) + bchr(len(barcode_data)) + barcode_data)
+        self._write_immediately(b'\n')
+        self._write_immediately(h2b(b'1d6b') + bchr(barcode_type_byte) + bchr(len(barcode_data)) + barcode_data)
 
     def feed_and_cut(self):
-        self._write_immediately('\n\n\n\n' + h2b('1d5601'))
+        self._write_immediately(b'\n\n\n\n' + h2b(b'1d5601'))
 
 class TicketML(object):
     NO_PRINT_CONTENT = {
