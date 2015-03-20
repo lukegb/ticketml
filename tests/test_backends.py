@@ -22,11 +22,7 @@ class BackendMixin(object):
         self.mock_serial = mock.MagicMock()
 
     def test_init_sets_left_alignment(self):
-        self.backend.linebreak()
-        self.mock_serial.write.assert_any_call(b'\n\x1ba\x00')  # sets alignment to left
-
-    def test_init_doesnt_left_align_until_linebreak(self):
-        self.assertFalse(any(b'\x1ba' in x for ((x,),_) in self.mock_serial.write.call_args_list))
+        self.mock_serial.write.assert_any_call(b'\x1ba\x00')  # sets alignment to left
 
     def test_print_text_prints_text(self):
         self.mock_serial.reset_mock()

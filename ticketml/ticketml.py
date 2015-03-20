@@ -162,7 +162,7 @@ class Ibm4610Backend(BaseBackend):
     def __init__(self, serial):
         self._serial = serial
         self._on_next_linebreak = b''
-        self._at_linebreak = False
+        self._at_linebreak = True
 
         self._set_alignment(self.ALIGNMENT_LEFT)
 
@@ -232,14 +232,14 @@ class CbmBackend(BaseBackend):
     def __init__(self, serial):
         self._serial = serial
         self._on_next_linebreak = b''
-        self._at_linebreak = False
+        self._at_linebreak = True
 
         self._set_printing_mode(0)
         self._set_alignment(self.ALIGNMENT_LEFT)
 
     def _set_printing_mode(self, new_mode):
         self._printing_mode = new_mode
-        self._write_immediately(h2b(b'1b21') + bchr(new_mode))
+        self._write_at_linebreak(h2b(b'1b21') + bchr(new_mode))
 
     def _set_printing_mode_bit(self, bit, new_state):
         self._set_printing_mode(set_or_clear_bit(self._printing_mode, bit, new_state))
