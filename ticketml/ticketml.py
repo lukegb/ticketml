@@ -12,6 +12,11 @@ from enum import Enum
 import binascii
 import sys
 
+def make_unicode(s):
+    if isinstance(s, type(u"")):
+        return s
+    return s.decode('utf-8')
+
 class Emphasis(Enum):
     on = True
     off = False
@@ -59,7 +64,6 @@ def set_or_clear_bit(data, bit, new_value):
     return data
 
 def h2b(hchars):
-    print(type(hchars), hchars)
     return binascii.unhexlify(hchars)
 
 if sys.version < '3':
@@ -189,7 +193,7 @@ class Ibm4610Backend(BaseBackend):
     def print_barcode(self, barcode_type, barcode_data, hri_posn, barcode_height):
         barcode_type_byte = self._start_print_barcode(barcode_type, hri_posn, barcode_height)
         self._write_immediately(b'\n')
-        self._write_immediately(h2b(b'1d6b') + bchr(barcode_type_byte) + barcode_data + bchr(0))
+        self._write_immediately(h2b(b'1d6b') + bchr(barcode_type_byte) + barcode_data.encode(self.CODEPAGE) + bchr(0))
 
     def feed_and_cut(self):
         self._write_immediately(h2b(b'0c'))
@@ -267,7 +271,7 @@ class CbmBackend(BaseBackend):
     def print_barcode(self, barcode_type, barcode_data, hri_posn, barcode_height):
         barcode_type_byte = self._start_print_barcode(barcode_type, hri_posn, barcode_height)
         self._write_immediately(b'\n')
-        self._write_immediately(h2b(b'1d6b') + bchr(barcode_type_byte) + bchr(len(barcode_data)) + barcode_data)
+        self._write_immediately(h2b(b'1d6b') + bchr(barcode_type_byte) + bchr(len(barcode_data)) + barcode_data.encode(self.CODEPAGE))
 
     def feed_and_cut(self):
         self._write_immediately(b'\n\n\n\n' + h2b(b'1d5601'))
@@ -311,11 +315,13 @@ class TicketML(object):
                 handler(action, elem)
 
             if action == 'start' and elem.text and not self.NO_PRINT_CONTENT.get(elem.tag, False):
-                self.print_text(elem.text)
+                self.print_text(make_unicode(elem.text))
             elif action == 'end' and elem.tail:
-                self.print_text(elem.tail)
+                self.print_text(make_unicode(elem.tail))
 
     def print_text(self, text):
+        if not isinstance(text, type(u"")):
+            raise TypeError("input must be a unicode str")
         text = text.replace('\r', '').replace('\n', '')
         if not text:
             return
@@ -367,7 +373,7 @@ class TicketML(object):
             return
  
         chars_per_line = self.backend.get_characters_per_line(self.stack[0]['font_width'])
-        txt = elem.text.replace('\r', '').replace('\n', '')
+        txt = make_unicode(elem.text).replace('\r', '').replace('\n', '')
         if len(txt) <= chars_per_line:
             self.print_text(txt)
             return
@@ -455,6 +461,6 @@ class TicketML(object):
 
         barcode_height = int(elem.get('height', '12'))
 
-        barcode_data = elem.text.strip()
+        barcode_data = make_unicode(elem.text).strip()
 
         self.backend.print_barcode(barcode_type, barcode_data, hri_position, barcode_height)
