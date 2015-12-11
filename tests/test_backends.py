@@ -35,7 +35,7 @@ class BackendMixin(object):
         self.mock_serial.write.assert_called_once_with(b'\x9c')
 
     @raises(UnicodeEncodeError)
-    def test_print_text_fails_With_unencodable_text(self):
+    def test_print_text_fails_with_unencodable_text(self):
         self.mock_serial.reset_mock()
         self.backend.print_text('ルーク')
 
