@@ -197,6 +197,7 @@ class Ibm4610Backend(BaseBackend):
 
     def feed_and_cut(self):
         self._write_immediately(h2b(b'0c'))
+        self._at_linebreak = True
 
 class CbmBackend(BaseBackend):
     EMPHASIS_BIT = 3
@@ -275,6 +276,7 @@ class CbmBackend(BaseBackend):
 
     def feed_and_cut(self):
         self._write_immediately(b'\n\n\n\n' + h2b(b'1d5601'))
+        self._at_linebreak = True
 
 class TicketML(object):
     NO_PRINT_CONTENT = {
