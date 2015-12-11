@@ -35,7 +35,7 @@ if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_in
 
 setup(
     name='ticketml',
-    version='0.2',
+    version='0.2.1',
     description="TicketML is a simple markup language for receipt printers",
     long_description=readme + '\n\n' + history,
     author="Luke Granger-Brown",
