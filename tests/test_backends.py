@@ -8,7 +8,7 @@
 from __future__ import division, absolute_import, print_function, unicode_literals
 
 import ticketml
-from ticketml.ticketml import Emphasis
+from ticketml.ticketml import Emphasis, Alignment
 import unittest
 try:
     import unittest.mock as mock
@@ -34,6 +34,15 @@ class BackendMixin(object):
         self.mock_serial.reset_mock()
         self.backend.print_text('£')
         self.mock_serial.write.assert_called_once_with(b'\x9c')
+
+    def test_cut_considered_as_linebreak(self):
+        self.backend.print_text('hi')
+        self.backend.feed_and_cut()
+        self.assertTrue(self.backend._at_linebreak)
+        self.mock_serial.reset_mock()
+        self.backend.set_alignment(Alignment.right)
+        self.assertTrue(self.mock_serial.write.called)
+        self.assertTrue(self.backend._at_linebreak)
 
     @raises(UnicodeEncodeError)
     def test_print_text_fails_with_unencodable_text(self):
