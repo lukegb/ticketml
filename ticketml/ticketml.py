@@ -319,7 +319,7 @@ class TicketML(object):
         text = text.replace('\r', '').replace('\n', '')
         if not text:
             return
-        self.backend.print_text(text.encode('utf-8'))
+        self.backend.print_text(text)
 
     def new_state(self, change):
         new_state = dict(self.stack[0])
