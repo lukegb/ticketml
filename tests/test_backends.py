@@ -8,6 +8,7 @@
 from __future__ import division, absolute_import, print_function, unicode_literals
 
 import ticketml
+from ticketml.ticketml import Emphasis
 import unittest
 try:
     import unittest.mock as mock
@@ -47,6 +48,11 @@ class CbmBackendTests(BackendMixin, unittest.TestCase):
 
     def test_init_sets_default_printing_mode(self):
         self.mock_serial.write.assert_any_call(b'\x1b!\x00')  # sets printing mode to 0
+
+    def test_printing_mode_change_midline(self):
+        self.backend.print_text('hello')
+        self.backend.set_emphasis(Emphasis.on)
+        self.mock_serial.write.assert_any_call(b'\x1b!\x08')  # sets printing mode to 0
 
 
 class Ibm4610BackendTests(BackendMixin, unittest.TestCase):
